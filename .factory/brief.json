@@ -1,0 +1,30 @@
+{
+  "slug": "pen-latency-lab",
+  "title": "Stroke Lab",
+  "territory": "games-creative",
+  "user": "Digital artists and maintainers of browser/cross-platform drawing tools who need to isolate whether a bad stroke comes from smoothing, device sampling, rendering, or undo history.",
+  "evidence": [
+    {
+      "url": "https://hn.algolia.com/api/v1/items/47272799",
+      "date": "2026-03-06",
+      "quote_or_summary": "Pixel-art users compare several editors and report cursor behavior and platform reliability concerns, showing that feel and basic input quality determine tool choice."
+    },
+    {
+      "url": "https://github.com/excalidraw/excalidraw/issues/11981",
+      "date": "2026-08-26",
+      "quote_or_summary": "A pen-tablet user asks to disable auto-smoothing because delayed strokes and dotted i's break handwriting flow, despite other apps working without delay."
+    }
+  ],
+  "recurrence": "Artist feedback spans pixel editors and web whiteboards; even small latency destroys trust because drawing is continuous motor feedback.",
+  "current_workaround": "Switch apps, toggle an undocumented smoothing setting, screen-record a bad stroke, or submit an issue without timing evidence.",
+  "incumbents_and_gap": "Browser devtools profile frames and professional tablet diagnostics, but neither provides a creator-readable trace of pointer sample rate, coalescing, smoothing delay, raster delay, and undo cost.",
+  "smallest_useful_product": "A local web test pad plus embeddable JS probe that records anonymized pointer timing, draws raw versus smoothed traces, and exports a reproducible issue bundle. Non-goals: replacing brush engines, driver installation, or cloud telemetry.",
+  "success_measure": "A maintainer can classify a supplied bad-stroke report as input, smoothing, render, or history-related in under ten minutes in 80% of pilot cases.",
+  "artifact_class": "library-npm",
+  "monetization": "free — broad integration and transparent diagnostics matter more than gating a frustrating input problem; paid support is possible.",
+  "constraints": "Never capture drawing content by default; support pen pressure/tilt only with explicit consent; disclose browser timestamp precision limits.",
+  "est_build_effort": "M",
+  "why_distinct": "It measures and explains drawing feel; it is not a new canvas editor or a thin AI brush wrapper.",
+  "confidence": 4,
+  "state": "RESEARCHED"
+}
