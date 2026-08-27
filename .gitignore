@@ -2,3 +2,4 @@ node_modules/
 dist/
 .factory/evidence/
 *.tgz
+graphify-out/
