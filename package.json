@@ -1,0 +1,25 @@
+{
+  "name": "pen-latency-lab",
+  "version": "0.1.0",
+  "description": "Privacy-first pointer timing diagnostics for browser drawing tools.",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": { ".": { "types": "./dist/index.d.ts", "import": "./dist/index.js", "require": "./dist/index.cjs" } },
+  "files": ["dist/index.js", "dist/index.cjs", "dist/index.d.ts", "README.md", "LICENSE", "CHANGELOG.md"],
+  "sideEffects": false,
+  "engines": { "node": ">=18" },
+  "scripts": {
+    "dev": "vite --config vite.site.config.ts",
+    "build:lib": "vite build --config vite.lib.config.ts && tsc -p tsconfig.lib.json",
+    "build:site": "vite build --config vite.site.config.ts",
+    "build": "node scripts/clean.mjs && npm run build:lib && npm run build:site",
+    "test": "npm run build:lib && node --test tests/*.test.mjs",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "pack:check": "npm pack --dry-run"
+  },
+  "keywords": ["pointer-events", "stylus", "latency", "drawing", "diagnostics"],
+  "license": "MIT",
+  "devDependencies": { "typescript": "^5.9.2", "vite": "^7.1.3" }
+}
