@@ -13,7 +13,7 @@
   <body>
     <a class="skip-link" href="#main">Skip to the lab</a>
     <header class="site-header">
-      <a class="brand" href="/" aria-label="Stroke Lab home"><span aria-hidden="true">SL/</span> Stroke Lab</a>
+      <a class="brand" href="/"><span aria-hidden="true">SL/</span> Stroke Lab</a>
       <nav aria-label="Primary navigation">
         <a href="#lab">Open lab</a>
         <a href="#install">Install probe</a>
@@ -34,7 +34,7 @@
           <p class="privacy-stamp"><span aria-hidden="true">●</span> No uploads. No drawing content in exports by default.</p>
         </div>
         <figure class="hero-asset">
-          <img src="/stroke-slab.webp" width="1280" height="853" alt="Concrete calibration slab with dotted orange input marks, a moss seam, and a continuous green stroke" fetchpriority="high">
+          <img src="/stroke-slab-720.webp" srcset="/stroke-slab-480.webp 480w, /stroke-slab-720.webp 720w, /stroke-slab.webp 1280w" sizes="(max-width: 900px) calc(100vw - 32px), 54vw" width="1280" height="853" alt="Concrete calibration slab with dotted orange input marks, a moss seam, and a continuous green stroke" fetchpriority="high">
           <figcaption><b>RAW / PROCESSED</b><span>one motion, two traces</span></figcaption>
         </figure>
       </section>
@@ -133,8 +133,8 @@
         </div>
         <div class="code-block">
           <div><span>npm</span><button id="copy-install" type="button" aria-label="Copy install command">Copy</button></div>
-          <pre><code>npm install pen-latency-lab</code></pre>
-          <pre><code>const probe = createStrokeProbe(canvas, {
+          <pre tabindex="0"><code>npm install pen-latency-lab</code></pre>
+          <pre tabindex="0"><code>const probe = createStrokeProbe(canvas, {
   smoothingWindowMs: 12,
   onStroke: console.table
 });</code></pre>

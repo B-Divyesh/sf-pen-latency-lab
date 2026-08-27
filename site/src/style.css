@@ -106,6 +106,7 @@ input[type="range"] { width: 100%; min-height: 44px; accent-color: var(--moss-da
 .finding[data-status="clear"] { border-top: 5px solid #719344; }
 .bundle { margin-top: 80px; padding: 40px; display: grid; grid-template-columns: .8fr 1.2fr; gap: 64px; background: var(--concrete-1); color: var(--rebar); box-shadow: 10px 10px 0 #0c0e0c; }
 .bundle > div:first-child p:last-child { color: var(--dust); }
+.bundle .eyebrow { color: var(--moss-dark); }
 .bundle-form { display: grid; gap: 8px; }
 .bundle-form label { margin-top: 8px; font-weight: 800; }
 .bundle-form label span { font-size: 12px; color: var(--dust); font-weight: 400; }

@@ -51,7 +51,7 @@ UI transitions last 160ms and affect only transform/opacity. Result rows appear 
 
 The hero uses one generated editorial still: a top-down concrete calibration slab with moss occupying the gap between an orange sampled line and a dark green continuous line. It explains the product's raw-versus-smoothed comparison and leaves negative space for the page title. No words, interface chrome, logos, or people.
 
-- File: `site/public/stroke-slab.webp`
+- Files: `site/public/stroke-slab.webp` plus 720px and 480px responsive WebP derivatives
 - Generator: factory `factory-image` deployment via `/opt/fleet/lib/gen-image.sh`
 - Prompt: “Top-down editorial still life for a web diagnostic tool: a rough pale concrete calibration slab, one angular vermilion grease-pencil stroke made of separated sample dots, beside one continuous dark moss-green ink stroke, a small patch of real moss growing precisely in the gap between them, subtle engraved timing tick marks and a steel stylus nib, brutalist materials, overcast workshop light, restrained off-white/charcoal/moss/orange palette, wide landscape composition with generous empty concrete on the left for headline overlay, tactile realistic texture, no people, no hands, no letters, no numbers, no logos, no UI, no gradients, no watermark.”
 - License: original project asset generated for Stroke Lab; distributed under the repository MIT license.
