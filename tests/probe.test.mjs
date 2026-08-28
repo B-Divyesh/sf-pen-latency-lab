@@ -68,3 +68,53 @@ test("CommonJS export exposes the same public API", () => {
   assert.equal(typeof commonjs.createStrokeProbe, "function");
   assert.equal(typeof commonjs.analyzeSession, "function");
 });
+
+test("numeric public inputs cannot serialize as null", () => {
+  const probe = createStrokeProbe(new EventTarget(), { smoothingWindowMs: Infinity, maxStrokes: NaN });
+  probe.setPrivacy({ captureGeometry: true, capturePenDetails: true });
+  probe.setSmoothingWindow(NaN);
+  const configured = probe.recordStroke([{ time: 0 }, { time: 10 }], { renderDelaysMs: [NaN, Infinity, -1] });
+  probe.setSmoothingWindow(Infinity);
+  const infiniteConfigured = probe.recordStroke([{ time: 20 }, { time: 30 }]);
+  const stroke = probe.recordStroke([
+    { time: -1, x: 1 },
+    { time: NaN, x: 2 },
+    { time: Infinity, x: 3 },
+    { time: 0, receivedAt: NaN, x: NaN, y: Infinity, pressure: Infinity, tiltX: NaN, tiltY: Infinity, twist: NaN },
+    { time: 12, receivedAt: Infinity, x: -4, y: 8, pressure: .5, tiltX: -3, tiltY: 4, twist: 9 },
+  ], { eventCount: Infinity, coalescedSampleCount: NaN, renderDelaysMs: [-1, NaN, Infinity, 4], smoothingWindowMs: Infinity });
+  const empty = probe.recordStroke([], { renderDelaysMs: [-1, NaN, Infinity], smoothingWindowMs: -3 });
+  const bundle = JSON.parse(probe.exportIssueBundle());
+
+  assert.equal(configured.p95RenderDelayMs, 0);
+  assert.equal(configured.smoothingWindowMs, 0);
+  assert.equal(infiniteConfigured.smoothingWindowMs, 0);
+  assert.equal(stroke.sampleCount, 2);
+  assert.equal(stroke.eventCount, 2);
+  assert.equal(stroke.coalescedSampleCount, 0);
+  assert.equal(stroke.p95RenderDelayMs, 4);
+  assert.equal(stroke.smoothingWindowMs, 0);
+  assert.deepEqual(stroke.samples[0], { time: 0 });
+  assert.equal(empty.sampleCount, 0);
+  assert.equal(empty.p95RenderDelayMs, 0);
+  assert.equal(empty.smoothingWindowMs, 0);
+  assert.equal(JSON.stringify(bundle).includes("null"), false);
+  for (const summary of bundle.strokes) {
+    for (const value of Object.values(summary)) {
+      if (typeof value === "number") assert.equal(Number.isFinite(value), true);
+    }
+  }
+  probe.destroy();
+});
+
+test("analysis treats invalid supplied summary metrics as zero evidence", () => {
+  const invalid = {
+    id: 1, pointerType: "external", durationMs: NaN, sampleCount: Infinity, eventCount: NaN,
+    coalescedSampleCount: Infinity, sampleRateHz: Infinity, medianSampleIntervalMs: NaN,
+    p95SampleIntervalMs: Infinity, intervalJitterMs: NaN, p95RenderDelayMs: -1, smoothingWindowMs: Infinity,
+  };
+  const diagnosis = analyzeSession([invalid], [{ label: "undo", durationMs: NaN, measuredAt: Infinity }]);
+  assert.equal(diagnosis.primary, "healthy");
+  assert.equal(JSON.stringify(diagnosis).includes("null"), false);
+  assert.equal(JSON.stringify(diagnosis).includes("NaN"), false);
+});

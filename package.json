@@ -1,6 +1,6 @@
 {
   "name": "pen-latency-lab",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Privacy-first pointer timing diagnostics for browser drawing tools.",
   "type": "module",
   "main": "./dist/index.cjs",

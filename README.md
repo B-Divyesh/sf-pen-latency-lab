@@ -50,6 +50,10 @@ Pressure, tilt, and twist are never retained without `capturePenDetails: true`. 
 
 Frameworks that already own input collection can call `probe.recordStroke(samples)` instead of relying on DOM listeners. See the exported TypeScript declarations for `InputSample`, `StrokeSummary`, and `IssueBundle`.
 
+## Input validation
+
+All public timing values must be finite. Stroke Lab clamps negative or non-finite smoothing to `0`, discards non-finite or negative timestamps and render delays, and discards non-finite optional geometry or pen values. An empty or fully discarded external sample list produces a valid zero-valued summary, so an exported bundle always conforms to its numeric TypeScript contract.
+
 ## Development
 
 ```sh

@@ -1,28 +1,46 @@
-# Stroke Lab verifier handoff — FAIL
+# Stroke Lab repair handoff — ready for static deployment
 
-**Candidate:** `dcbdd610c52ea3bf64b3579d7b51fdba29e83ea3`
-**Live URL:** https://pen-latency-lab.sociobot.in/
-**Verified:** 28 August 2026 UTC
+**Work order:** `pen-latency-lab-repair-1`
 
-## Result
+**Base verification:** `879896e143431449bf2c8cf19d8a659c0d058b41` (candidate `dcbdd610c52ea3bf64b3579d7b51fdba29e83ea3`)
 
-**FAIL — medium-severity public API validation defect.** `setSmoothingWindow(NaN | Infinity)` and non-finite `renderDelaysMs` are accepted, then `exportIssueBundle()` serializes declared numeric fields as JSON `null`. This can yield invalid/non-reproducible issue bundles for library consumers. Product source was not modified by verification.
+**Artifact:** TypeScript npm library (ESM + CJS + declarations) and static Vite documentation/lab at `dist/site/`
+**Release:** `0.1.1`
 
-See [.factory/verification.md](verification.md) for exact reproduction, full evidence, and the complete test matrix.
+## Repair completed
 
-## Verified passing
+The verifier’s blocker is fixed at every public numeric boundary. Non-finite smoothing is clamped to `0`; non-finite or negative timestamps and render delays are discarded; invalid counters fall back to safe finite values; and non-finite opt-in geometry/pen values are never retained. Empty or wholly discarded external strokes now export a valid zero-valued summary. `analyzeSession()` also treats missing/invalid sampling metrics as no evidence rather than a false 0 Hz input diagnosis.
 
-- Clean `npm ci`, `npm test` (4/4), `npm run typecheck`, and exact `npm run build`.
-- Package tarball (9.1 kB) installed and exercised in a clean ESM, CommonJS, and TypeScript consumer.
-- Local and live desktop/390px end-to-end lab paths, privacy-default and opt-in exports, keyboard, recovery paths, reduced motion, offline reload, and service-worker update.
-- axe serious/critical: 0; console/page errors: 0; third-party runtime requests: 0.
-- Lighthouse mobile: Performance 99, Accessibility 100, Best Practices 100, SEO 100; LCP 1.9 s, CLS 0, TBT 20 ms.
-- Live root, JS, CSS, legal pages, service worker, manifest, and hero asset byte-match the fresh candidate build.
+Regression coverage in `tests/probe.test.mjs` exercises `NaN`, `Infinity`, negative timestamps, negative delays, non-finite optional samples, invalid counters, empty samples, JSON serialization, and direct invalid summaries. The original verifier reproduction now produces `smoothing: 0` and `delay: 0`, never JSON `null`.
 
-## Fix before release
+The service worker cache was also advanced to `stroke-lab-v3`. It precaches the built JS/CSS entry assets and only uses the HTML shell as a navigation fallback, preventing an offline module request from receiving HTML. This lets installed clients activate the repaired static shell through the existing `skipWaiting` and `clients.claim` update policy.
 
-Validate all public numeric inputs with `Number.isFinite`; reject, clamp, or filter `NaN`/`Infinity`, preserve only finite values in summaries, and add regression tests for non-finite smoothing, delay, timestamp, and external sample inputs. Rebuild and request re-verification.
+## Verification evidence
 
-## Notes
+- Clean install: `npm ci` installed 21 packages; `npm audit` reported 0 vulnerabilities.
+- Unit/integration: `npm test` passed 6/6 tests.
+- Types: `npm run typecheck` passed. No separate lint script is defined by this small TypeScript package.
+- Production build: `npm run build` passed and produced library artifacts plus `dist/site/`. Built JS is 15,873 B (6,330 B gzip); CSS is 11,970 B (3,450 B gzip); largest hero is 239,168 B.
+- Browser: `npm run test:browser` passed at 390×844 and 1366×900: keyboard and real pointer strokes, axe serious/critical 0, console/page errors 0, third-party requests 0, legal routes, service-worker control, cached offline shell reload, and online recovery all passed.
+- Privacy: source scan found no storage, cookie, analytics, beacon, XMLHttpRequest, or runtime third-party integration; the only matching text is the privacy disclosure itself. Default unit coverage confirms geometry and pen data remain opt-in.
+- PWA: the browser suite confirms the active worker has the built module asset in Cache Storage before the offline shell reload; cache version `stroke-lab-v3` provides an update boundary for existing installations.
+- Package: `npm pack --dry-run` and `npm pack --json` passed. The ready-to-publish `pen-latency-lab-0.1.1.tgz` contains 7 files, is 10,011 B packed / 28,488 B unpacked. A fresh temporary consumer installed that tarball and passed ESM invalid-input and CommonJS empty-stroke flows.
+- Lighthouse: local production preview report scored 100 Performance, 100 Accessibility, 100 Best Practices, and 100 SEO; LCP 1,353 ms, CLS 0, TBT 19 ms. Lighthouse wrote a complete report despite its Chromium process ending with a post-audit target-crash exit status.
 
-The live response uses HSTS, strict referrer policy, and nosniff. Hashed assets are cached for only 30 seconds rather than immutable long-term, and CSP/Permissions-Policy are absent; record these as deployment hardening follow-ups.
+## Run, verify, and deploy
+
+```sh
+npm ci
+npm test
+npm run typecheck
+npm run build
+npx vite preview --config vite.site.config.ts --host 127.0.0.1
+npm run test:browser
+npm pack
+```
+
+Deploy the static artifact at `dist/site/` to `https://pen-latency-lab.sociobot.in`. The repository has no separate deployment manifest; the factory’s static deployment class uses that documented Vite output root. Do not publish the npm package from this worker; `npm pack` creates the handoff tarball for the registry owner.
+
+## Known follow-ups
+
+The independent verifier’s non-blocking deployment observations still apply to the platform response policy: deployed hashed assets currently have a short cache lifetime, and CSP/Permissions-Policy are not set. Those headers are deployment infrastructure, not repository-owned application behavior.

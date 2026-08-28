@@ -141,14 +141,24 @@ interface ActiveStroke {
   latestReceivedAt: number;
 }
 
+const isFiniteNumber = (value: unknown): value is number => typeof value === "number" && Number.isFinite(value);
+
+const finiteOr = (value: unknown, fallback = 0): number => isFiniteNumber(value) ? value : fallback;
+
+const nonNegative = (value: unknown, fallback = 0): number => Math.max(0, finiteOr(value, fallback));
+
+const nonNegativeInteger = (value: unknown, fallback = 0): number => Math.floor(nonNegative(value, fallback));
+
+const optionalFinite = (value: unknown): number | undefined => isFiniteNumber(value) ? value : undefined;
+
 const round = (value: number, digits = 1): number => {
   const scale = 10 ** digits;
-  return Math.round(value * scale) / scale;
+  return Math.round(finiteOr(value) * scale) / scale;
 };
 
 const quantile = (values: number[], amount: number): number => {
-  if (values.length === 0) return 0;
-  const ordered = [...values].sort((a, b) => a - b);
+  const ordered = values.filter(Number.isFinite).sort((a, b) => a - b);
+  if (ordered.length === 0) return 0;
   const index = Math.min(ordered.length - 1, Math.max(0, Math.ceil(amount * ordered.length) - 1));
   return ordered[index] ?? 0;
 };
@@ -156,7 +166,7 @@ const quantile = (values: number[], amount: number): number => {
 const statusFor = (score: number): FindingStatus => score >= 70 ? "likely" : score >= 35 ? "watch" : "clear";
 
 function finding(category: DiagnosisCategory, score: number, label: string, evidence: string, recommendation: string): DiagnosticFinding {
-  const normalized = round(Math.max(0, Math.min(100, score)), 0);
+  const normalized = round(Math.max(0, Math.min(100, finiteOr(score))), 0);
   return { category, status: statusFor(normalized), score: normalized, label, evidence, recommendation };
 }
 
@@ -174,12 +184,12 @@ export function analyzeSession(strokes: StrokeSummary[], history: HistoryMeasure
     };
   }
 
-  const intervals = strokes.map((stroke) => stroke.p95SampleIntervalMs).filter(Number.isFinite);
-  const rates = strokes.map((stroke) => stroke.sampleRateHz).filter((rate) => rate > 0);
-  const jitters = strokes.map((stroke) => stroke.intervalJitterMs);
-  const frameDelays = strokes.map((stroke) => stroke.p95RenderDelayMs).filter((delay) => delay > 0);
-  const smoothing = strokes.map((stroke) => stroke.smoothingWindowMs);
-  const historyDelays = history.map((item) => item.durationMs);
+  const intervals = strokes.map((stroke) => nonNegative(stroke.p95SampleIntervalMs)).filter((gap) => gap > 0);
+  const rates = strokes.map((stroke) => nonNegative(stroke.sampleRateHz)).filter((rate) => rate > 0);
+  const jitters = strokes.map((stroke) => nonNegative(stroke.intervalJitterMs));
+  const frameDelays = strokes.map((stroke) => nonNegative(stroke.p95RenderDelayMs)).filter((delay) => delay > 0);
+  const smoothing = strokes.map((stroke) => nonNegative(stroke.smoothingWindowMs));
+  const historyDelays = history.map((item) => nonNegative(item.durationMs));
 
   const inputInterval = quantile(intervals, 0.5);
   const inputRate = quantile(rates, 0.5);
@@ -188,7 +198,9 @@ export function analyzeSession(strokes: StrokeSummary[], history: HistoryMeasure
   const smoothingDelay = quantile(smoothing, 0.95);
   const historyDelay = quantile(historyDelays, 0.95);
 
-  const inputScore = Math.min(100, Math.max((inputInterval - 10) * 4, (jitter - 5) * 5, (60 - inputRate) * 1.5));
+  const inputScore = intervals.length > 0 || rates.length > 0
+    ? Math.min(100, Math.max((inputInterval - 10) * 4, (jitter - 5) * 5, (60 - inputRate) * 1.5))
+    : 0;
   const smoothingScore = Math.min(100, Math.max(0, (smoothingDelay - 8) * 4));
   const renderScore = Math.min(100, Math.max(0, (frame - 12) * 4));
   const historyScore = Math.min(100, Math.max(0, (historyDelay - 20) * 1.6));
@@ -208,13 +220,39 @@ export function analyzeSession(strokes: StrokeSummary[], history: HistoryMeasure
   };
 }
 
+/**
+ * Keep reports JSON-safe when consumers pass data from an untrusted event
+ * bridge. Negative timestamps cannot describe a Pointer Event timeline, while
+ * coordinates and pen details may legitimately be negative, so only the
+ * latter retain their sign.
+ */
+function normalizeSample(sample: InputSample): InputSample | undefined {
+  if (!isFiniteNumber(sample.time) || sample.time < 0) return undefined;
+  const value: InputSample = { time: sample.time };
+  const receivedAt = optionalFinite(sample.receivedAt);
+  if (receivedAt !== undefined && receivedAt >= 0) value.receivedAt = receivedAt;
+  const x = optionalFinite(sample.x);
+  const y = optionalFinite(sample.y);
+  const pressure = optionalFinite(sample.pressure);
+  const tiltX = optionalFinite(sample.tiltX);
+  const tiltY = optionalFinite(sample.tiltY);
+  const twist = optionalFinite(sample.twist);
+  if (x !== undefined) value.x = x;
+  if (y !== undefined) value.y = y;
+  if (pressure !== undefined) value.pressure = pressure;
+  if (tiltX !== undefined) value.tiltX = tiltX;
+  if (tiltY !== undefined) value.tiltY = tiltY;
+  if (twist !== undefined) value.twist = twist;
+  return value;
+}
+
 function summarize(
   id: number,
   samples: InputSample[],
   options: Required<Pick<RecordStrokeOptions, "pointerType" | "eventCount" | "coalescedSampleCount" | "renderDelaysMs" | "smoothingWindowMs">>,
   privacy: { captureGeometry: boolean; capturePenDetails: boolean },
 ): StrokeSummary {
-  const ordered = [...samples].sort((a, b) => a.time - b.time);
+  const ordered = samples.map(normalizeSample).filter((sample): sample is InputSample => sample !== undefined).sort((a, b) => a.time - b.time);
   const intervals = ordered.slice(1).map((sample, index) => Math.max(0, sample.time - (ordered[index]?.time ?? sample.time))).filter((gap) => gap > 0);
   const durationMs = ordered.length > 1 ? Math.max(0, (ordered.at(-1)?.time ?? 0) - (ordered[0]?.time ?? 0)) : 0;
   const median = quantile(intervals, 0.5);
@@ -242,8 +280,8 @@ function summarize(
     medianSampleIntervalMs: round(median),
     p95SampleIntervalMs: round(quantile(intervals, 0.95)),
     intervalJitterMs: round(quantile(intervals.map((gap) => Math.abs(gap - median)), 0.95)),
-    p95RenderDelayMs: round(quantile(options.renderDelaysMs, 0.95)),
-    smoothingWindowMs: round(options.smoothingWindowMs),
+    p95RenderDelayMs: round(quantile(options.renderDelaysMs.filter((delay) => isFiniteNumber(delay) && delay >= 0), 0.95)),
+    smoothingWindowMs: round(nonNegative(options.smoothingWindowMs)),
   };
   if (stored) result.samples = stored;
   return result;
@@ -276,10 +314,10 @@ function environmentFor(target: EventTarget): ReportEnvironment {
 }
 
 export function createStrokeProbe(target: EventTarget, options: StrokeProbeOptions = {}): StrokeProbe {
-  let smoothingWindowMs = Math.max(0, options.smoothingWindowMs ?? 0);
+  let smoothingWindowMs = nonNegative(options.smoothingWindowMs);
   let captureGeometry = options.captureGeometry ?? false;
   let capturePenDetails = options.capturePenDetails ?? false;
-  const maxStrokes = Math.max(1, options.maxStrokes ?? 40);
+  const maxStrokes = Math.max(1, nonNegativeInteger(options.maxStrokes, 40));
   const autoFrameMeasure = options.autoFrameMeasure ?? true;
   const strokes: StrokeSummary[] = [];
   const history: HistoryMeasurement[] = [];
@@ -295,11 +333,11 @@ export function createStrokeProbe(target: EventTarget, options: StrokeProbeOptio
     if (!autoFrameMeasure || frameHandle !== undefined || typeof requestAnimationFrame === "undefined") return;
     frameHandle = requestAnimationFrame((time) => {
       frameHandle = undefined;
-      if (lastActive) lastActive.renderDelaysMs.push(Math.max(0, time - lastActive.latestReceivedAt));
+      if (lastActive) lastActive.renderDelaysMs.push(nonNegative(time - lastActive.latestReceivedAt));
     });
   };
 
-  const readSample = (event: PointerEvent): InputSample => {
+  const readSample = (event: PointerEvent): InputSample | undefined => {
     const sample: InputSample = { time: event.timeStamp, receivedAt: now(), x: event.clientX, y: event.clientY };
     if (capturePenDetails) {
       sample.pressure = event.pressure;
@@ -307,7 +345,7 @@ export function createStrokeProbe(target: EventTarget, options: StrokeProbeOptio
       sample.tiltY = event.tiltY;
       sample.twist = event.twist;
     }
-    return sample;
+    return normalizeSample(sample);
   };
 
   const collect = (event: PointerEvent, phase: "start" | "move") => {
@@ -319,6 +357,7 @@ export function createStrokeProbe(target: EventTarget, options: StrokeProbeOptio
     current.coalescedSampleCount += Math.max(0, source.length - 1);
     for (const item of source) {
       const sample = readSample(item);
+      if (!sample) continue;
       current.samples.push(sample);
       current.latestReceivedAt = sample.receivedAt ?? now();
       options.onSample?.({ strokeId: current.id, pointerType: current.pointerType, phase, sample: { ...sample, receivedAt: sample.receivedAt ?? now() } });
@@ -375,20 +414,23 @@ export function createStrokeProbe(target: EventTarget, options: StrokeProbeOptio
 
   return {
     markRendered(at = now()) {
-      if (lastActive) lastActive.renderDelaysMs.push(Math.max(0, at - lastActive.latestReceivedAt));
+      const renderedAt = isFiniteNumber(at) && at >= 0 ? at : now();
+      if (lastActive) lastActive.renderDelaysMs.push(nonNegative(renderedAt - lastActive.latestReceivedAt));
     },
     async measureHistory<T>(label: string, action: () => T | Promise<T>): Promise<T> {
       const started = now();
       try { return await action(); }
-      finally { history.push({ label, durationMs: round(now() - started, 2), measuredAt: Date.now() }); }
+      finally { history.push({ label, durationMs: round(nonNegative(now() - started), 2), measuredAt: Date.now() }); }
     },
     recordStroke(samples, recordOptions = {}) {
-      const summary = summarize(nextId++, samples.map((sample) => ({ ...sample, receivedAt: sample.receivedAt ?? now() })), {
+      const normalizedSamples = samples.map(normalizeSample).filter((sample): sample is InputSample => sample !== undefined)
+        .map((sample) => ({ ...sample, receivedAt: sample.receivedAt ?? now() }));
+      const summary = summarize(nextId++, normalizedSamples, {
         pointerType: recordOptions.pointerType ?? "external",
-        eventCount: recordOptions.eventCount ?? samples.length,
-        coalescedSampleCount: recordOptions.coalescedSampleCount ?? 0,
-        renderDelaysMs: recordOptions.renderDelaysMs ?? [],
-        smoothingWindowMs: recordOptions.smoothingWindowMs ?? smoothingWindowMs,
+        eventCount: nonNegativeInteger(recordOptions.eventCount, normalizedSamples.length),
+        coalescedSampleCount: nonNegativeInteger(recordOptions.coalescedSampleCount),
+        renderDelaysMs: (recordOptions.renderDelaysMs ?? []).filter((delay) => isFiniteNumber(delay) && delay >= 0),
+        smoothingWindowMs: recordOptions.smoothingWindowMs === undefined ? smoothingWindowMs : nonNegative(recordOptions.smoothingWindowMs),
       }, { captureGeometry, capturePenDetails });
       strokes.push(summary);
       if (strokes.length > maxStrokes) strokes.splice(0, strokes.length - maxStrokes);
@@ -399,7 +441,7 @@ export function createStrokeProbe(target: EventTarget, options: StrokeProbeOptio
       if (next.captureGeometry !== undefined) captureGeometry = next.captureGeometry;
       if (next.capturePenDetails !== undefined) capturePenDetails = next.capturePenDetails;
     },
-    setSmoothingWindow(milliseconds) { smoothingWindowMs = Math.max(0, milliseconds); },
+    setSmoothingWindow(milliseconds) { smoothingWindowMs = nonNegative(milliseconds); },
     getReport: report,
     exportIssueBundle(context = {}) {
       const bundle: IssueBundle = { ...report(), issue: { ...context } };
