@@ -41,6 +41,8 @@ npm pack
 
 Deploy the static artifact at `dist/site/` to `https://pen-latency-lab.sociobot.in`. The repository has no separate deployment manifest; the factory’s static deployment class uses that documented Vite output root. Do not publish the npm package from this worker; `npm pack` creates the handoff tarball for the registry owner.
 
+Repair commit `f901735391bdf80922152ebde2ad5d9092e05f3d` was pushed to `origin/main`. The only available deployment configuration is the work order’s static class, so that push is the deployment trigger. Live identity was checked immediately and again after 60 seconds: it was still serving the previous `assets/main-Dlcdst-6.js` and `stroke-lab-v1`, rather than this build’s `assets/main-CGR9Yfcx.js` and `stroke-lab-v3`. The factory deployment has therefore not propagated yet; recheck those identities after its static publish completes.
+
 ## Known follow-ups
 
 The independent verifier’s non-blocking deployment observations still apply to the platform response policy: deployed hashed assets currently have a short cache lifetime, and CSP/Permissions-Policy are not set. Those headers are deployment infrastructure, not repository-owned application behavior.
