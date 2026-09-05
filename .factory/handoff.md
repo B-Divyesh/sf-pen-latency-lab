@@ -1,41 +1,41 @@
-# Stroke Lab verification handoff — PASS
+# Stroke Lab review handoff — FAIL
 
-**Work order:** `pen-latency-lab-verify-2`
-**Tested candidate:** `5c8ff577f3ce86db8c69eaba5a6713f742c1171b`
+**Work order:** `pen-latency-lab-review-1`
+**Implementation candidate:** `5c8ff577f3ce86db8c69eaba5a6713f742c1171b`
+**Documentation commit:** `1ae2cfe3921f5c8908a0b406d4d5aa0e3715680a`
 **Live URL:** <https://pen-latency-lab.sociobot.in/>
-**Artifact:** npm library (ESM, CJS, TypeScript declarations) plus static local test pad at `dist/site/`.
 
 ## Result
 
-**PASS.** Independent verification from a clean detached checkout passed. The deployment previously reported as stale now serves the exact candidate build: root HTML, emitted JS/CSS, legal pages, service worker, manifest, and hero asset all matched SHA-256 byte-for-byte.
+**FAIL — 5 findings and 12 untested public claims.** No product code was changed in this review. The live root HTML and emitted JS/CSS exactly match the implementation candidate; the newer commits are report-only.
 
-## Verified
+The library and ordinary lab path are healthy: clean install, unit tests (6/6), types, build, pack checks, clean ESM/CJS consumer use, live desktop/mobile browser paths, default-export privacy, offline reload, and serious/critical axe checks passed.
 
-- `npm ci`, `npm test` (6/6), `npm run typecheck`, `npm run build`, `npm run pack:check`, and `npm pack --json` all passed. No lint script exists.
-- Fresh packed consumer installation passed ESM and CommonJS public API flows; strict TypeScript compilation against the packed declarations passed.
-- The former non-finite-number defect is fixed: invalid timing inputs cannot serialize as JSON `null`.
-- Local production preview and live deployment passed independent 390px mobile and desktop flows: keyboard, pointer, smoothing boundaries, default/opt-in report privacy, export, clear cancel/confirm, clipboard-denied recovery, focus, reduced motion, and 0 serious/critical axe findings. No console/page errors or third-party runtime requests occurred.
-- Service-worker cache, offline reload, and a simulated changed-worker update passed.
-- Size budgets pass: JS 15,873 B (6,330 B gzip), CSS 11,970 B (3,453 B gzip), no fonts, largest hero 239,168 B. Lighthouse: 100 Performance, 100 Accessibility, 100 Best Practices, 100 SEO; LCP 1.4 s, CLS 0, TBT 20 ms.
+The product remains blocked on required product-contract work:
 
-## Run or publish
+- no `/demo` sample-data sandbox, persistent demo label, reset/leave controls, or `.factory/demo.md`;
+- no `.factory/claims.json`, hence no required claim tests for 12 public claims;
+- first screen lacks the required plain-language job/audience/sample action, and no copy audit exists;
+- `/404` and `/demo` fall back to the landing page; sitemap, static host configuration, canonical/social/touch metadata are absent; and
+- the earlier CSP, Permissions-Policy, and immutable-cache gaps remain open.
+
+## How to verify
 
 ```sh
 npm ci
+npx playwright install chromium
 npm test
 npm run typecheck
 npm run build
+npm run pack:check
+npm pack --json
+npm exec vite -- preview --config vite.site.config.ts --host 127.0.0.1 --port 4173
 npm run test:browser
-npm pack
+STROKE_LAB_URL=https://pen-latency-lab.sociobot.in npm run test:browser
 ```
 
-Install the matching Playwright browser first if needed: `npx playwright install chromium`.
+`npm pack` remains the ready-to-publish artifact command; publishing is factory-owned and was not performed.
 
-Deploy `dist/site/` for the static lab. `npm pack` produces the ready-to-publish package; registry publication is owned by the factory and was not performed.
+## Next steps
 
-## Known low-severity deployment gaps
-
-- Live hashed assets use `Cache-Control: public, must-revalidate, max-age=30`, not immutable long-lived caching.
-- CSP and Permissions-Policy are absent. HSTS, Referrer-Policy, and `X-Content-Type-Options: nosniff` are present; no cookies are set.
-
-These are static-host configuration follow-ups, not blockers for this candidate. Full evidence is in `.factory/verification-2.md`.
+Address the demo and claims manifest first, then complete site structure/metadata/404 and response policies. Full reproducible evidence and every finding are in `.factory/review-1.md`.
