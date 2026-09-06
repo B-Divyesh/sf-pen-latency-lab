@@ -1,10 +1,12 @@
 # Stroke Lab
 
-Stroke Lab is a zero-dependency TypeScript probe and local test pad for diagnosing why a browser-drawn stroke feels wrong. It separates four common causes—input sampling, smoothing delay, render delay, and undo/history cost—and exports a reproducible, privacy-safe issue bundle.
+Stroke Lab tests why a browser-drawn stroke lags. It separates input, smoothing, render, and history delays for artists and maintainers.
 
-It is for digital artists gathering evidence and maintainers debugging Pointer Events. It does not replace a brush engine, inspect tablet drivers, or upload telemetry.
+The local test pad exports a JSON issue bundle. The npm package adds the same measurements to an existing drawing tool.
 
-Live lab: https://pen-latency-lab.sociobot.in
+- Live site: https://pen-latency-lab.sociobot.in
+- One-click sample: https://pen-latency-lab.sociobot.in/demo
+- License: MIT
 
 ## Install
 
@@ -12,7 +14,9 @@ Live lab: https://pen-latency-lab.sociobot.in
 npm install pen-latency-lab
 ```
 
-## Usage
+The package has zero runtime dependencies. It includes ESM, CommonJS, and TypeScript declarations.
+
+## Use the probe
 
 ```ts
 import { createStrokeProbe } from "pen-latency-lab";
@@ -25,13 +29,12 @@ const probe = createStrokeProbe(canvas, {
   },
 });
 
-// Call after your engine has painted the newest input.
+// Call this after your engine paints the newest input.
 probe.markRendered();
 
-// Measure an undo/redo or history rebuild.
+// Measure an undo, redo, or history rebuild.
 await probe.measureHistory("undo", () => undoLastStroke());
 
-// Coordinates and pen details are excluded unless explicitly enabled.
 const json = probe.exportIssueBundle({
   title: "Dots appear after fast pen lifts",
   notes: "Reproduces with smoothing set to 12 ms",
@@ -40,35 +43,54 @@ const json = probe.exportIssueBundle({
 probe.destroy();
 ```
 
-`createStrokeProbe()` listens to Pointer Events and coalesced events when available. It stores aggregate timing only by default. The callback receives coordinates so your renderer can use the current sample, but the report does not retain them unless the user opts in:
+The probe listens to Pointer Events. It uses coalesced samples when the browser supplies them.
+
+Tools that already collect input can call `probe.recordStroke(samples)`. See the declarations for `InputSample`, `StrokeSummary`, and `IssueBundle`.
+
+## Control report detail
+
+Reports keep aggregate timing by default. They omit coordinates, pressure, tilt, twist, and the sample list.
+
+Enable each extra detail only with the user's consent:
 
 ```ts
 probe.setPrivacy({ captureGeometry: true, capturePenDetails: true });
 ```
 
-Pressure, tilt, and twist are never retained without `capturePenDetails: true`. Browser timestamps can be rounded or clamped; `report.environment.timestampPrecision` describes that limitation and findings are diagnostic leads, not driver-level proof.
+Each option affects later strokes only. Browser timestamps can be rounded or clamped, so every report states that limit.
 
-Frameworks that already own input collection can call `probe.recordStroke(samples)` instead of relying on DOM listeners. See the exported TypeScript declarations for `InputSample`, `StrokeSummary`, and `IssueBundle`.
+## Handle invalid input
 
-## Input validation
+All public timing values must be finite. Stroke Lab clamps invalid smoothing to zero and discards invalid timestamps and render delays.
 
-All public timing values must be finite. Stroke Lab clamps negative or non-finite smoothing to `0`, discards non-finite or negative timestamps and render delays, and discards non-finite optional geometry or pen values. An empty or fully discarded external sample list produces a valid zero-valued summary, so an exported bundle always conforms to its numeric TypeScript contract.
+An empty sample list still produces a valid numeric summary. Exported JSON does not contain `NaN`, `Infinity`, or accidental `null` numbers.
 
-## Development
+## Run from a clean checkout
+
+Use Node.js 18 or newer.
 
 ```sh
-npm install
-npm run dev          # local documentation and lab
-npm test             # builds the library and runs API tests
+npm ci
+npm test
 npm run typecheck
-npm run build        # library + static site in dist/site/
-npm run pack:check   # inspect the publishable npm tarball
+npm run build
+npm run pack:check
+npm run test:claims
+npm run test:browser
 ```
 
-The static deployment root is `dist/site` (with `index.html` at that root). The package entry points are `dist/index.js`, `dist/index.cjs`, and `dist/index.d.ts`.
+`npm run build` writes the library and site to `dist/`. The static deployment root is `dist/site/`.
 
-## Privacy and support
+`npm pack` creates the ready-to-publish package. Registry publishing belongs to the factory operator.
 
-Stroke Lab has no analytics, accounts, network submission, or runtime dependencies. The lab runs locally and downloads bundles directly in the browser. Reports exclude stroke coordinates and pen details by default. See `/privacy/` and `/terms/` on the site.
+Every public promise and its isolated command is listed in [`.factory/claims.json`](.factory/claims.json). The sample design is documented in [`.factory/demo.md`](.factory/demo.md).
 
-Open an issue with a generated bundle when reporting a problem. This project is MIT licensed.
+## Privacy and limits
+
+Stroke Lab has no accounts, cookies, analytics, uploads, or third-party runtime requests. The site works offline after its first visit.
+
+The default report contains timing and diagnostic fields, not drawing content. Review any optional details and notes before sharing a report.
+
+Stroke Lab does not replace a brush engine or inspect tablet drivers. Its findings are engineering leads, not driver-level proof.
+
+See the live [privacy policy](https://pen-latency-lab.sociobot.in/privacy/) and [terms](https://pen-latency-lab.sociobot.in/terms/).

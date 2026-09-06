@@ -1,8 +1,10 @@
 import "./style.css";
-import { createStrokeProbe, type DiagnosticFinding, type InputSample } from "../../src/index";
+import { createStrokeProbe, type DiagnosticFinding, type InputSample } from "pen-latency-lab";
 
 type Point = { x: number; y: number; time: number };
 type VisualStroke = { id: number; raw: Point[]; smooth: Point[] };
+
+const demoMode = location.pathname.replace(/\/$/, "") === "/demo" || new URLSearchParams(location.search).get("demo") === "1";
 
 const required = <T extends Element>(selector: string): T => {
   const value = document.querySelector<T>(selector);
@@ -32,6 +34,8 @@ const verdictCode = required<HTMLElement>("#verdict-code");
 const verdictSummary = required<HTMLElement>("#verdict-summary");
 const precisionNote = required<HTMLElement>("#precision-note");
 const networkState = required<HTMLElement>("#network-state");
+const demoBanner = required<HTMLElement>("#demo-banner");
+const resetDemoButton = required<HTMLButtonElement>("#reset-demo");
 
 const strokes: VisualStroke[] = [];
 let smoothingMs = Number(smoothingInput.value);
@@ -175,6 +179,19 @@ function updateReport(): void {
   copyButton.disabled = count === 0;
 }
 
+function smoothPoints(raw: Point[]): Point[] {
+  const alpha = smoothingMs === 0 ? 1 : Math.max(.08, Math.min(.8, 4 / (smoothingMs + 4)));
+  return raw.reduce<Point[]>((list, point) => {
+    const previous = list.at(-1);
+    list.push(previous ? {
+      x: previous.x + (point.x - previous.x) * alpha,
+      y: previous.y + (point.y - previous.y) * alpha,
+      time: point.time,
+    } : point);
+    return list;
+  }, []);
+}
+
 function addKeyboardStroke(): void {
   const id = Math.max(0, ...strokes.map((stroke) => stroke.id)) + 1;
   const raw: Point[] = [];
@@ -187,16 +204,77 @@ function addKeyboardStroke(): void {
     raw.push({ x, y, time });
     samples.push({ x, y, time, receivedAt: time + 2 });
   }
-  const alpha = smoothingMs === 0 ? 1 : Math.max(.08, Math.min(.8, 4 / (smoothingMs + 4)));
-  const smooth = raw.reduce<Point[]>((list, point) => {
-    const previous = list.at(-1);
-    list.push(previous ? { x: previous.x + (point.x - previous.x) * alpha, y: previous.y + (point.y - previous.y) * alpha, time: point.time } : point);
-    return list;
-  }, []);
-  strokes.push({ id, raw, smooth });
+  strokes.push({ id, raw, smooth: smoothPoints(raw) });
   probe.recordStroke(samples, { pointerType: "keyboard", renderDelaysMs: [8, 9, 8] });
   scheduleDraw();
   status.textContent = "Keyboard test stroke added.";
+}
+
+function makeDemoSamples(strokeIndex: number): InputSample[] {
+  const start = 1000 + strokeIndex * 500;
+  const baseY = 118 + strokeIndex * 92;
+  return Array.from({ length: 34 }, (_, index) => {
+    const time = start + index * 8 + Math.floor(index / 9) * 2;
+    return {
+      x: 42 + index * 9,
+      y: baseY + Math.sin(index / (2.8 + strokeIndex * .25)) * (34 + strokeIndex * 4),
+      time,
+      receivedAt: time + 3,
+      pressure: .35 + Math.sin(index / 7) * .16,
+      tiltX: 11,
+      tiltY: -5,
+    };
+  });
+}
+
+function seedDemo(): void {
+  strokes.splice(0);
+  probe.reset();
+  smoothingMs = 24;
+  smoothingInput.value = String(smoothingMs);
+  smoothingOutput.value = `${smoothingMs} ms`;
+  probe.setSmoothingWindow(smoothingMs);
+  geometryInput.checked = false;
+  penInput.checked = false;
+  probe.setPrivacy({ captureGeometry: false, capturePenDetails: false });
+  titleInput.value = "Dotted marks after fast pen lifts";
+  notesInput.value = "The line follows the pen after each quick turn. Compare the same strokes with less smoothing.";
+
+  for (let index = 0; index < 3; index += 1) {
+    const samples = makeDemoSamples(index);
+    const raw = samples.map((sample) => ({ x: sample.x ?? 0, y: sample.y ?? 0, time: sample.time }));
+    const id = index + 1;
+    strokes.push({ id, raw, smooth: smoothPoints(raw) });
+    probe.recordStroke(samples, {
+      pointerType: "pen",
+      eventCount: 28,
+      coalescedSampleCount: 6,
+      renderDelaysMs: [7, 8, 10, 9],
+      smoothingWindowMs: smoothingMs,
+    });
+  }
+  drawCanvas();
+  updateReport();
+  status.textContent = "Sample restored. Three strokes show smoothing as the strongest lead.";
+}
+
+function configureDemo(): void {
+  document.body.classList.add("is-demo");
+  demoBanner.hidden = false;
+  document.title = "Demo — Stroke Lab";
+  document.querySelector<HTMLLinkElement>('link[rel="canonical"]')?.setAttribute("href", "https://pen-latency-lab.sociobot.in/demo");
+  document.querySelector<HTMLMetaElement>('meta[name="description"]')?.setAttribute("content", "Explore three sample pen strokes and a populated browser drawing-lag diagnosis.");
+  document.querySelector<HTMLMetaElement>('meta[property="og:title"]')?.setAttribute("content", "Demo — Stroke Lab");
+  document.querySelector<HTMLMetaElement>('meta[property="og:url"]')?.setAttribute("content", "https://pen-latency-lab.sociobot.in/demo");
+  document.querySelector<HTMLMetaElement>('meta[name="twitter:title"]')?.setAttribute("content", "Demo — Stroke Lab");
+  required<HTMLAnchorElement>("#demo-nav").setAttribute("aria-current", "page");
+  required<HTMLElement>("#hero-title").textContent = "Diagnose the sample stroke delay";
+  const primary = required<HTMLAnchorElement>(".hero-actions .primary");
+  primary.href = "#lab";
+  primary.textContent = "View sample diagnosis";
+  required<HTMLElement>(".action-note").textContent = "Three sample strokes are loaded below.";
+  resetDemoButton.addEventListener("click", seedDemo);
+  seedDemo();
 }
 
 canvas.addEventListener("pointerdown", (event) => {
@@ -295,7 +373,8 @@ window.addEventListener("offline", updateNetwork);
 
 new ResizeObserver(resizeCanvas).observe(canvas);
 resizeCanvas();
-updateReport();
+if (demoMode) configureDemo();
+else updateReport();
 updateNetwork();
 
 if ("serviceWorker" in navigator && import.meta.env.PROD) {

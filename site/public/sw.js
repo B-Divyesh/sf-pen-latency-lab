@@ -1,5 +1,17 @@
-const CACHE = "stroke-lab-v3";
-const SHELL = ["/", "/privacy/", "/terms/", "/stroke-slab.webp", "/favicon.svg", "/manifest.webmanifest"];
+const CACHE = "stroke-lab-v4";
+const SHELL = [
+  "/",
+  "/demo",
+  "/privacy/",
+  "/terms/",
+  "/404.html",
+  "/stroke-slab-v1-480.webp",
+  "/stroke-slab-v1-720.webp",
+  "/stroke-slab-v1.webp",
+  "/favicon.svg",
+  "/apple-touch-icon-v1.png",
+  "/manifest.webmanifest",
+];
 
 self.addEventListener("install", (event) => {
   event.waitUntil((async () => {
@@ -21,8 +33,11 @@ self.addEventListener("activate", (event) => {
 
 self.addEventListener("fetch", (event) => {
   if (event.request.method !== "GET" || new URL(event.request.url).origin !== self.location.origin) return;
-  event.respondWith(caches.match(event.request).then((cached) => cached || fetch(event.request).then((response) => {
-    if (response.ok) caches.open(CACHE).then((cache) => cache.put(event.request, response.clone()));
+  event.respondWith(caches.match(event.request).then((cached) => cached || fetch(event.request).then(async (response) => {
+    if (response.ok) {
+      const cache = await caches.open(CACHE);
+      await cache.put(event.request, response.clone());
+    }
     return response;
-  }).catch(() => event.request.mode === "navigate" ? caches.match("/") : Response.error())));
+  }).catch(() => event.request.mode === "navigate" ? caches.match("/404.html") : Response.error())));
 });

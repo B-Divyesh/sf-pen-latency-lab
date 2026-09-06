@@ -1,10 +1,14 @@
 {
   "name": "Stroke Lab",
   "short_name": "Stroke Lab",
-  "description": "Local pointer timing diagnostics for drawing tools.",
+  "description": "Test browser drawing lag and export a local timing report.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#f1efe7",
   "theme_color": "#f1efe7",
-  "icons": [{ "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }]
+  "icons": [
+    { "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "/icon-v1-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-v1-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
+  ]
 }

@@ -2,31 +2,56 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="theme-color" content="#f1efe7">
-    <meta name="description" content="Stroke Lab privacy policy: local diagnostics, no telemetry, and opt-in drawing detail.">
+    <meta name="description" content="How Stroke Lab handles pointer timing, optional pen details, local reports, and offline files.">
+    <link rel="canonical" href="https://pen-latency-lab.sociobot.in/privacy/">
     <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="/apple-touch-icon-v1.png">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="Stroke Lab">
+    <meta property="og:title" content="Privacy — Stroke Lab">
+    <meta property="og:description" content="How Stroke Lab handles pointer timing, optional pen details, local reports, and offline files.">
+    <meta property="og:url" content="https://pen-latency-lab.sociobot.in/privacy/">
+    <meta property="og:image" content="https://pen-latency-lab.sociobot.in/social-card-v1.webp">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Privacy — Stroke Lab">
+    <meta name="twitter:description" content="How Stroke Lab handles pointer timing, optional pen details, local reports, and offline files.">
+    <meta name="twitter:image" content="https://pen-latency-lab.sociobot.in/social-card-v1.webp">
     <link rel="stylesheet" href="/src/style.css">
     <title>Privacy — Stroke Lab</title>
   </head>
   <body>
     <a class="skip-link" href="#main">Skip to privacy policy</a>
-    <header class="site-header"><a class="brand" href="/"><span aria-hidden="true">SL/</span> Stroke Lab</a><nav aria-label="Primary navigation"><a href="/">Open lab</a><a href="/terms/">Terms</a></nav></header>
+    <header class="site-header">
+      <a class="brand" href="/"><span aria-hidden="true">SL/</span> Stroke Lab</a>
+      <nav aria-label="Primary navigation"><a href="/demo">Demo</a><a href="/#method">How it works</a><a href="/#install">Install</a><a href="/privacy/" aria-current="page">Privacy</a></nav>
+    </header>
     <main class="legal-page" id="main">
-      <p class="eyebrow">Plain-language policy</p>
-      <h1>Private by construction.</h1>
-      <p class="updated"><b>Effective 27 August 2026.</b> Stroke Lab runs in your browser. We do not receive your strokes or diagnostic reports.</p>
+      <p class="eyebrow">Privacy policy</p>
+      <h1>How Stroke Lab handles your data</h1>
+      <p class="updated"><b>Effective 6 September 2026.</b> Stroke Lab runs in your browser. We do not receive your strokes or reports.</p>
       <h2>What the lab processes</h2>
-      <p>The lab temporarily processes pointer timestamps and coordinates so it can draw raw and smoothed traces. Aggregate timing—including sample rate, gaps, frame delay, and undo duration—stays in the current browser tab.</p>
+      <p>The lab processes pointer timestamps and coordinates while you draw. It uses coordinates to show raw and smoothed traces.</p>
+      <p>Timing totals stay in the current tab. Closing the tab discards the session.</p>
       <h2>What exports contain</h2>
-      <p>JSON exports contain timing aggregates, diagnostic findings, capability flags, and notes you enter. Stroke coordinates are excluded by default. Pressure and tilt are excluded by default and are only recorded for future strokes after you select the corresponding control. The bundle is downloaded directly by your browser.</p>
+      <p>JSON exports contain timing totals, findings, browser capabilities, and your notes. Coordinates are excluded by default.</p>
+      <p>Pressure and tilt are also excluded by default. Each option applies only to strokes made after you select it.</p>
+      <p>Your browser downloads the report directly. Review the file before sharing it.</p>
       <h2>Storage and network use</h2>
-      <p>We use no accounts, cookies, analytics, advertising, tracking pixels, cloud stroke storage, or third-party scripts. A service worker may cache public site files on your device so the lab remains available offline. You can remove that cache through your browser’s site-data controls.</p>
-      <h2>Your control</h2>
-      <p>Use “Clear test” to remove the current tab’s measurements, close the tab to discard the session, and delete any exported bundle through your device’s file manager. Review a bundle before attaching it to an issue.</p>
+      <p>We use no accounts, cookies, analytics, advertising, tracking pixels, cloud stroke storage, or third-party scripts.</p>
+      <p>A service worker caches public site files for offline use. Remove that cache through your browser's site-data controls.</p>
+      <p>The sample demo uses memory only. It does not read or change a real test.</p>
+      <h2>Your choices</h2>
+      <p>Select “Clear test” to remove the current measurements. Delete an exported report with your device's file manager.</p>
       <h2>Contact</h2>
-      <p>For privacy questions, open an issue in the <a href="https://github.com/B-Divyesh/sf-pen-latency-lab">Stroke Lab repository</a>. Do not include sensitive drawing content in a public issue.</p>
+      <p>For a privacy request, open an issue in the <a href="https://github.com/B-Divyesh/sf-pen-latency-lab">Stroke Lab repository (external)</a>.</p>
+      <p>Do not include sensitive drawing content in a public issue.</p>
     </main>
-    <footer><div><a class="brand" href="/"><span aria-hidden="true">SL/</span> Stroke Lab</a><p>Drawing-feel evidence, not drawing surveillance.</p></div><nav aria-label="Legal"><a href="/privacy/" aria-current="page">Privacy</a><a href="/terms/">Terms</a></nav><p>MIT · Param Factory · 2026</p></footer>
+    <footer>
+      <div><a class="brand" href="/"><span aria-hidden="true">SL/</span> Stroke Lab</a><p>Local pointer timing diagnostics for browser drawing tools.</p></div>
+      <nav aria-label="Legal"><a href="/privacy/" aria-current="page">Privacy</a><a href="/terms/">Terms</a><a href="https://github.com/B-Divyesh/sf-pen-latency-lab">Source on GitHub (external)</a></nav>
+      <p>Built by Param Factory · v0.1.2</p>
+    </footer>
   </body>
 </html>

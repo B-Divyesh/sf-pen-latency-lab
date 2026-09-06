@@ -1,0 +1,1 @@
+Diagnose browser drawing lag with a local stroke test and exportable timing report.

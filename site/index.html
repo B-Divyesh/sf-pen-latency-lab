@@ -4,46 +4,75 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="theme-color" content="#f1efe7">
-    <meta name="description" content="Measure pointer sampling, smoothing, render delay, and undo cost in a private local drawing lab.">
+    <meta name="description" content="Test browser drawing input, smoothing, render delay, and undo cost. Export a local timing report for a maintainer.">
+    <link rel="canonical" href="https://pen-latency-lab.sociobot.in/">
     <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="/apple-touch-icon-v1.png">
     <link rel="manifest" href="/manifest.webmanifest">
-    <title>Stroke Lab — find what makes a drawn stroke lag</title>
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="Stroke Lab">
+    <meta property="og:title" content="Stroke Lab — diagnose browser drawing lag">
+    <meta property="og:description" content="Test a bad browser stroke and export local timing evidence for a maintainer.">
+    <meta property="og:url" content="https://pen-latency-lab.sociobot.in/">
+    <meta property="og:image" content="https://pen-latency-lab.sociobot.in/social-card-v1.webp">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="Orange pointer samples and a green smoothed line on a concrete test slab">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Stroke Lab — diagnose browser drawing lag">
+    <meta name="twitter:description" content="Test a bad browser stroke and export local timing evidence for a maintainer.">
+    <meta name="twitter:image" content="https://pen-latency-lab.sociobot.in/social-card-v1.webp">
+    <title>Stroke Lab — diagnose browser drawing lag</title>
     <script type="module" src="/src/main.ts"></script>
   </head>
   <body>
     <a class="skip-link" href="#main">Skip to the lab</a>
+    <aside class="demo-banner" id="demo-banner" aria-label="Demo controls" hidden>
+      <strong>Demo — sample data, nothing is saved</strong>
+      <span>Three handwriting strokes show a smoothing delay.</span>
+      <div>
+        <button id="reset-demo" type="button">Reset demo</button>
+        <a href="/">Start for real</a>
+      </div>
+    </aside>
     <header class="site-header">
       <a class="brand" href="/"><span aria-hidden="true">SL/</span> Stroke Lab</a>
       <nav aria-label="Primary navigation">
-        <a href="#lab">Open lab</a>
-        <a href="#install">Install probe</a>
-        <a href="https://github.com/B-Divyesh/sf-pen-latency-lab">Source</a>
+        <a href="/demo" id="demo-nav">Demo</a>
+        <a href="/#method">How it works</a>
+        <a href="/#install">Install</a>
+        <a href="/privacy/">Privacy</a>
       </nav>
     </header>
 
     <main id="main">
       <section class="hero" aria-labelledby="hero-title">
         <div class="hero-copy">
-          <p class="eyebrow">Pointer diagnostics / local only</p>
-          <h1 id="hero-title">Bad stroke.<br><span>Find the guilty layer.</span></h1>
-          <p class="lede">Separate device sampling, smoothing, paint delay, and undo cost—then send evidence a maintainer can act on.</p>
+          <p class="eyebrow">Browser stroke diagnostics</p>
+          <h1 id="hero-title">Find what makes a drawn stroke lag</h1>
+          <p class="lede">For digital artists and drawing-tool maintainers who need to separate input, smoothing, render, and undo delays.</p>
           <div class="hero-actions">
-            <a class="button primary" href="#lab">Run a stroke test <span aria-hidden="true">↓</span></a>
-            <a class="text-link" href="#method">See what is measured</a>
+            <a class="button primary" href="/demo">Try it with sample data</a>
+            <a class="text-link" href="#lab">Start a blank test</a>
           </div>
-          <p class="privacy-stamp"><span aria-hidden="true">●</span> No uploads. No drawing content in exports by default.</p>
+          <p class="action-note">The sample loads three strokes and a diagnosis.</p>
+          <ul class="hero-facts" aria-label="Product facts">
+            <li>Free under the MIT License</li>
+            <li>Works offline after the first visit</li>
+            <li>No uploads or accounts</li>
+          </ul>
         </div>
         <figure class="hero-asset">
-          <img src="/stroke-slab-720.webp" srcset="/stroke-slab-480.webp 480w, /stroke-slab-720.webp 720w, /stroke-slab.webp 1280w" sizes="(max-width: 900px) calc(100vw - 32px), 54vw" width="1280" height="853" alt="Concrete calibration slab with dotted orange input marks, a moss seam, and a continuous green stroke" fetchpriority="high">
-          <figcaption><b>RAW / PROCESSED</b><span>one motion, two traces</span></figcaption>
+          <img src="/stroke-slab-v1-720.webp" srcset="/stroke-slab-v1-480.webp 480w, /stroke-slab-v1-720.webp 720w, /stroke-slab-v1.webp 1280w" sizes="(max-width: 900px) calc(100vw - 32px), 54vw" width="1280" height="853" alt="Orange pointer samples and a green smoothed line on a concrete test slab" fetchpriority="high">
+          <figcaption><b>RAW AND SMOOTHED</b><span>one stroke, two traces</span></figcaption>
         </figure>
       </section>
 
       <section class="lab-section" id="lab" aria-labelledby="lab-title">
         <div class="section-heading">
-          <p class="eyebrow">Test bench 01</p>
-          <h2 id="lab-title">Draw what feels wrong.</h2>
-          <p>Make at least three strokes at your usual speed. The orange line shows received samples; moss shows the configured smoothing response.</p>
+          <p class="eyebrow">Browser test pad</p>
+          <h2 id="lab-title">Test a stroke in your browser</h2>
+          <p>Draw at least three strokes at your usual speed. Orange marks show input samples. The green line shows smoothing.</p>
         </div>
 
         <div class="instrument">
@@ -68,7 +97,7 @@
           <div class="pad-wrap">
             <canvas id="draw-pad" width="1200" height="600" tabindex="0" aria-label="Stroke test pad. Draw with a pointer, or press Space or Enter to add a keyboard test stroke." aria-describedby="pad-help"></canvas>
             <div class="pad-empty" id="pad-empty" aria-hidden="true"><b>01 /</b><span>Draw here</span></div>
-            <p class="sr-only" id="pad-help">Use a pen, mouse, or touch. With a keyboard, use arrow keys to move the start position and press Space or Enter to create a test stroke.</p>
+            <p class="sr-only" id="pad-help">Use a pen, mouse, or touch. Use arrow keys to move. Press Space or Enter to add a test stroke.</p>
             <div class="trace-legend" aria-label="Trace legend"><span class="raw-key">Raw samples</span><span class="smooth-key">Smoothed path</span></div>
           </div>
 
@@ -91,14 +120,14 @@
         <section class="bundle" aria-labelledby="bundle-title">
           <div>
             <p class="eyebrow">Issue bundle</p>
-            <h3 id="bundle-title">Take the evidence with you.</h3>
-            <p>Versioned JSON includes timing aggregates, browser capability flags, findings, and your notes. It stays on this device until you attach it somewhere.</p>
+            <h3 id="bundle-title">Export a JSON timing report</h3>
+            <p>The download includes timing, browser capabilities, findings, and your notes. It stays on this device until you share it.</p>
           </div>
           <div class="bundle-form">
             <label for="issue-title">Issue title <span>optional</span></label>
-            <input id="issue-title" type="text" maxlength="120" placeholder="e.g. dots appear after fast pen lifts">
+            <input id="issue-title" type="text" maxlength="120" placeholder="Dots appear after fast pen lifts">
             <label for="issue-notes">What felt wrong? <span>optional</span></label>
-            <textarea id="issue-notes" rows="3" maxlength="600" placeholder="What did you expect, and what happened?"></textarea>
+            <textarea id="issue-notes" rows="3" maxlength="600" placeholder="Describe what you expected and what happened."></textarea>
             <div class="bundle-actions">
               <button class="button primary" id="export" type="button" disabled>Export JSON</button>
               <button class="button secondary" id="copy" type="button" disabled>Copy summary</button>
@@ -110,26 +139,38 @@
 
       <section class="method" id="method" aria-labelledby="method-title">
         <div class="section-heading">
-          <p class="eyebrow">Four suspects, one trace</p>
-          <h2 id="method-title">A readable timing chain.</h2>
+          <p class="eyebrow">How it works</p>
+          <h2 id="method-title">Check a stroke in three steps</h2>
         </div>
         <ol class="timing-chain">
-          <li><b>01 Input</b><span>sample rate, p95 gaps, jitter, coalesced count</span></li>
-          <li><b>02 Smoothing</b><span>declared following window versus raw timing</span></li>
-          <li><b>03 Render</b><span>input receipt to the next reported paint</span></li>
-          <li><b>04 History</b><span>measured undo or document rebuild duration</span></li>
+          <li><b>01 Load or draw</b><span>Use the sample or make strokes with a pen, mouse, touch, or keyboard.</span></li>
+          <li><b>02 Compare delays</b><span>Read input, smoothing, render, and undo findings with measured reasons.</span></li>
+          <li><b>03 Export JSON</b><span>Download the timing report and attach it to a bug report.</span></li>
         </ol>
         <aside class="precision-callout">
-          <b>Precision note</b>
-          <p>Browser and privacy settings can clamp timestamps. Stroke Lab reports its estimate and treats every verdict as a lead, not proof of a driver fault.</p>
+          <b>Timestamp limits</b>
+          <p>Browsers can round timestamps. The report states its estimate. Each diagnosis is a lead, not proof of a driver fault.</p>
         </aside>
+      </section>
+
+      <section class="scope" aria-labelledby="scope-title">
+        <div>
+          <p class="eyebrow">Privacy and limits</p>
+          <h2 id="scope-title">What Stroke Lab does not do</h2>
+        </div>
+        <ul>
+          <li>It does not upload strokes, reports, or notes.</li>
+          <li>It does not inspect tablet drivers or replace a brush engine.</li>
+          <li>Exports omit coordinates, pressure, and tilt by default.</li>
+        </ul>
+        <a class="text-link" href="/privacy/">Read the privacy policy</a>
       </section>
 
       <section class="install" id="install" aria-labelledby="install-title">
         <div>
           <p class="eyebrow">For maintainers</p>
-          <h2 id="install-title">Put the probe beside your brush engine.</h2>
-          <p>Zero runtime dependencies. ESM, CommonJS, and TypeScript declarations. No telemetry.</p>
+          <h2 id="install-title">Add timing checks to your drawing tool</h2>
+          <p>The package has zero runtime dependencies. It includes ESM, CommonJS, and TypeScript declarations.</p>
         </div>
         <div class="code-block">
           <div><span>npm</span><button id="copy-install" type="button" aria-label="Copy install command">Copy</button></div>
@@ -143,9 +184,9 @@
     </main>
 
     <footer>
-      <div><span class="brand"><span aria-hidden="true">SL/</span> Stroke Lab</span><p>Drawing-feel evidence, not drawing surveillance.</p></div>
-      <nav aria-label="Legal"><a href="/privacy/">Privacy</a><a href="/terms/">Terms</a><a href="https://github.com/B-Divyesh/sf-pen-latency-lab">GitHub</a></nav>
-      <p>MIT · Param Factory · 2026</p>
+      <div><a class="brand" href="/"><span aria-hidden="true">SL/</span> Stroke Lab</a><p>Local pointer timing diagnostics for browser drawing tools.</p></div>
+      <nav aria-label="Legal"><a href="/privacy/">Privacy</a><a href="/terms/">Terms</a><a href="https://github.com/B-Divyesh/sf-pen-latency-lab">Source on GitHub (external)</a></nav>
+      <p>Built by Param Factory · v0.1.2</p>
     </footer>
   </body>
 </html>

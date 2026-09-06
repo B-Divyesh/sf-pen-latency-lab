@@ -3,3 +3,5 @@ dist/
 .factory/evidence/
 *.tgz
 graphify-out/
+test-results/
+playwright-report/

@@ -1,6 +1,6 @@
 {
   "name": "pen-latency-lab",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Privacy-first pointer timing diagnostics for browser drawing tools.",
   "type": "module",
   "main": "./dist/index.cjs",
@@ -26,12 +26,13 @@
     "node": ">=18"
   },
   "scripts": {
-    "dev": "vite --config vite.site.config.ts",
+    "dev": "npm run build:lib && vite --config vite.site.config.ts",
     "build:lib": "vite build --config vite.lib.config.ts && tsc -p tsconfig.lib.json",
-    "build:site": "vite build --config vite.site.config.ts",
-    "build": "node scripts/clean.mjs && npm run build:lib && npm run build:site",
+    "build:site": "npm run build:lib && vite build --config vite.site.config.ts",
+    "build": "node scripts/clean.mjs && npm run build:site",
     "test": "npm run build:lib && node --test tests/*.test.mjs",
-    "test:browser": "node tests/site.browser.mjs",
+    "test:claims": "npm run build && playwright test --config playwright.config.ts",
+    "test:browser": "node scripts/run-browser-tests.mjs",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "pack:check": "npm pack --dry-run"
   },
@@ -44,8 +45,9 @@
   ],
   "license": "MIT",
   "devDependencies": {
-    "@axe-core/playwright": "^4.13.0",
-    "@playwright/test": "^1.62.1",
+    "@axe-core/playwright": "4.11.1",
+    "@playwright/test": "1.58.2",
+    "playwright-core": "1.58.2",
     "typescript": "^5.9.2",
     "vite": "^7.1.3"
   }
