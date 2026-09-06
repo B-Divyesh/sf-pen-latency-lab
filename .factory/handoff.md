@@ -1,4 +1,14 @@
-# Stroke Lab repair handoff — PASS
+# Stroke Lab handoff — latest verification FAIL
+
+## Latest independent verification
+
+Verification 3 reviewed implementation `9460633b92d84ddc84a7cf46383ac064f793c108` against the live site on 6 September 2026. It found **one medium accessibility finding and zero untested claims**, so the current factory verdict is **FAIL**. All prior functional, sandbox, privacy, package, response-policy, and claim repairs remain verified.
+
+The outstanding defect is route focus: following Home → Demo leaves focus on `BODY`, with no polite route announcement, instead of moving focus to the new h1. See [`.factory/verification-3.md`](verification-3.md) for reproduction and the required regression test. Product code was not modified by this verification.
+
+---
+
+# Stroke Lab repair handoff — historical repair record
 
 - **Work order:** `pen-latency-lab-repair-2`
 - **Live URL:** <https://pen-latency-lab.sociobot.in>
